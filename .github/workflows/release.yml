@@ -1,14 +1,30 @@
 name: release
 
-# Push a tag like v1.0.1 (matching "version" in .claude-plugin/plugin.json) to publish
-# issanmode.zip — the skill bundle for claude.ai and Claude Desktop — to GitHub Releases.
+# Two ways to publish issanmode.zip (the skill bundle for claude.ai and Claude Desktop):
+#  - Actions → release → Run workflow: pick patch/minor/major (or type a version). The workflow
+#    bumps plugin.json, commits it via the API (GitHub-signed, so it shows as Verified),
+#    tags the commit and publishes the release.
+#  - Push a tag like v1.0.1 yourself; it must match "version" in .claude-plugin/plugin.json.
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (ignored when version is set)
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: Exact version, e.g. 1.2.0 (optional)
+        type: string
+        required: false
 
 permissions:
   contents: write
+
+concurrency: release
 
 jobs:
   release:
@@ -19,13 +35,52 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check tag matches plugin.json version
+      - name: Resolve version
+        id: v
+        env:
+          BUMP: ${{ inputs.bump }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version=$(node -p "require('./.claude-plugin/plugin.json').version")
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match plugin.json version $version"
-            exit 1
+          current=$(node -p "require('./.claude-plugin/plugin.json').version")
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            if [ "v$current" != "$GITHUB_REF_NAME" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match plugin.json version $current"
+              exit 1
+            fi
+            version=$current
+          else
+            if [ "$GITHUB_REF" != refs/heads/main ]; then
+              echo "::error::Run the release workflow from main"
+              exit 1
+            fi
+            if [ -n "$INPUT_VERSION" ]; then
+              version=${INPUT_VERSION#v}
+            else
+              version=$(node -e '
+                const [M, m, p] = process.argv[1].split(".").map(Number);
+                const b = process.argv[2];
+                console.log(b === "major" ? `${M + 1}.0.0` : b === "minor" ? `${M}.${m + 1}.0` : `${M}.${m}.${p + 1}`);
+              ' "$current" "$BUMP")
+            fi
+            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Invalid version: $version"
+              exit 1
+            fi
+            if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+              echo "::error::Tag v$version already exists"
+              exit 1
+            fi
           fi
+          echo "Releasing v$version (plugin.json was $current)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Bump plugin.json
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          sed -i -E "s/(\"version\": *\")[^\"]+\"/\1$VERSION\"/" .claude-plugin/plugin.json
+          grep -q "\"version\": \"$VERSION\"" .claude-plugin/plugin.json
 
       - name: Test
         run: node --test tests/*.test.js
@@ -36,9 +91,34 @@ jobs:
           mkdir -p dist
           cd .agents/skills && zip -r "$GITHUB_WORKSPACE/dist/issanmode.zip" issanmode
 
+      - name: Commit version bump
+        id: commit
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          if git diff --quiet -- .claude-plugin/plugin.json; then
+            echo "plugin.json already at $VERSION"
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Committing through the contents API (not git push) gets the commit signed by GitHub.
+          path=.claude-plugin/plugin.json
+          blob=$(gh api "repos/$GITHUB_REPOSITORY/contents/$path?ref=main" -q .sha)
+          sha=$(gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/$path" \
+            -f message="Release v$VERSION" \
+            -f content="$(base64 -w0 "$path")" \
+            -f sha="$blob" \
+            -f branch=main \
+            -q .commit.sha)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+          TARGET: ${{ steps.commit.outputs.sha || github.sha }}
         run: |
           cat > notes.md <<EOF
           ## ติดตั้ง
@@ -47,7 +127,8 @@ jobs:
           - **Claude Code:** \`/plugin marketplace add ${GITHUB_REPOSITORY}\` แล้ว \`/plugin install wowissan@wowissan\`
           - **Agent อื่นๆ:** \`npx skills add ${GITHUB_REPOSITORY}\`
           EOF
-          gh release create "$GITHUB_REF_NAME" dist/issanmode.zip \
-            --title "$GITHUB_REF_NAME — เว้าอีสาน" \
+          gh release create "v$VERSION" dist/issanmode.zip \
+            --target "$TARGET" \
+            --title "v$VERSION — เว้าอีสาน" \
             --notes-file notes.md \
             --generate-notes

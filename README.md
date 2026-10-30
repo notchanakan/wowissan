@@ -82,11 +82,19 @@ MIT
 
 ## ออก release ใหม่
 
-GitHub Actions จะสร้าง `issanmode.zip` (สำหรับ claude.ai / Claude Desktop) แล้วแนบขึ้น
-[Releases](https://github.com/notchanakan/wowissan/releases) ให้อัตโนมัติเมื่อ push tag:
+GitHub Actions สร้าง `issanmode.zip` (สำหรับ claude.ai / Claude Desktop) แล้วแนบขึ้น
+[Releases](https://github.com/notchanakan/wowissan/releases) ให้อัตโนมัติ
 
-1. แก้ `"version"` ใน `.claude-plugin/plugin.json` เช่น `1.0.1`
-2. commit แล้ว push
-3. `git tag v1.0.1 && git push origin v1.0.1`
+**แบบกดปุ่ม (แนะนำ):** [Actions → release → Run workflow](https://github.com/notchanakan/wowissan/actions/workflows/release.yml)
+แล้วเลือก `patch` / `minor` / `major` หรือพิมพ์ version เอง workflow จะแก้ version ใน `plugin.json`,
+commit (ขึ้น Verified), สร้าง tag และ release ให้ครบ หรือสั่งจาก terminal:
 
-tag ต้องตรงกับ version ใน `plugin.json` ไม่งั้น workflow จะ fail
+```bash
+gh workflow run release.yml -f bump=patch      # 1.0.0 → 1.0.1
+gh workflow run release.yml -f version=2.0.0   # กำหนดเอง
+```
+
+อย่าลืม `git pull` หลังจากนั้น เพราะ workflow commit version ใหม่ขึ้น `main`
+
+**แบบ push tag เอง:** แก้ `"version"` ใน `.claude-plugin/plugin.json` → commit + push →
+`git tag v1.0.1 && git push origin v1.0.1` (tag ต้องตรงกับ version ไม่งั้น workflow จะ fail)
