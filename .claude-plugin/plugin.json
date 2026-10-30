@@ -1,6 +1,6 @@
 {
   "name": "wowissan",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "เว้าอีสาน (wowissan) — ให้ Claude เว้าภาษาอีสานเท่านั้น เปิดด้วย /issanmode on ปิดด้วย /issanmode off (ค่าเริ่มต้นปิด) | Isan dialect mode for Claude Code.",
   "author": {
     "name": "notchanakan"
