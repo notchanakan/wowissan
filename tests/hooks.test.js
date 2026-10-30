@@ -57,3 +57,7 @@ test('similar text is not treated as the command', () => {
   assert.strictEqual(prompt('what does /issanmode on do?', home), '');
   assert.strictEqual(prompt('/issanmodex on', home), '');
 });
+
+test('portable SKILL.md is in sync with the hook ruleset', () => {
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'build-skill.js'), '--check']);
+});

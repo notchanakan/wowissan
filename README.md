@@ -17,6 +17,8 @@ Plugin สำหรับ Claude Code ที่ให้ Claude **เว้า�
 
 ## ติดตั้ง
 
+### Claude Code (แนะนำ — เสถียรสุด)
+
 ต้องมี `node` ในเครื่อง
 
 ```
@@ -31,6 +33,24 @@ Plugin สำหรับ Claude Code ที่ให้ Claude **เว้า�
 ```bash
 claude --plugin-dir /path/to/wowissan
 ```
+
+### claude.ai (web) และ Claude Desktop
+
+1. โหลด `issanmode.zip` จาก [Releases](https://github.com/notchanakan/wowissan/releases/latest)
+2. Settings → Capabilities → Skills → Upload skill → เลือก zip (ต้องเปิด code execution, แพลน Pro/Max/Team/Enterprise)
+3. ในแชท พิมพ์ `เปิดโหมดอีสาน` หรือ `issanmode on` / ปิดด้วย `ปิดโหมดอีสาน` หรือ `issanmode off`
+
+ต่างจากเวอร์ชัน Claude Code: เปิดได้ทีละแชท (แชทใหม่เริ่มปิด) และไม่มี hook คอยย้ำกฎทุกข้อความ
+แชทยาวๆ อาจหลุดกลับมาพูดภาษากลางบ้าง ถ้าหลุดก็สั่งเปิดซ้ำ
+
+### Agent อื่นๆ ผ่าน [skills.sh](https://skills.sh) (Codex, Cursor, OpenCode, ...)
+
+```bash
+npx skills add notchanakan/wowissan
+```
+
+ตัว skill อยู่ที่ `.agents/skills/issanmode/SKILL.md` — สร้างจาก ruleset เดียวกับ hook
+ถ้าแก้ `hooks/issan-state.js` ให้รัน `node scripts/build-skill.js` ด้วย (test จะ fail ถ้าลืม)
 
 ## ทำงานยังไง
 
