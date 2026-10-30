@@ -14,4 +14,4 @@ jobs:
         with:
           node-version: 22
       # Includes the check that .agents/skills/issanmode/SKILL.md matches the hook ruleset.
-      - run: node --test tests/
+      - run: node --test tests/*.test.js

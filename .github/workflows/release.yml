@@ -28,7 +28,7 @@ jobs:
           fi
 
       - name: Test
-        run: node --test tests/
+        run: node --test tests/*.test.js
 
       - name: Build skill zip
         run: |

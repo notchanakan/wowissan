@@ -68,7 +68,7 @@ npx skills add notchanakan/wowissan
 ## Test
 
 ```bash
-node --test tests/
+node --test tests/*.test.js
 ```
 
 ## License
