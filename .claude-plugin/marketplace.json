@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wowissan",
+  "description": "เว้าอีสาน (wowissan) — Isan (Northeastern Thai) dialect mode for Claude Code.",
+  "owner": {
+    "name": "notchanakan"
+  },
+  "plugins": [
+    {
+      "name": "wowissan",
+      "description": "เว้าอีสาน — /issanmode on ให้ Claude เว้าอีสานเท่านั้น, /issanmode off กลับเป็นปกติ",
+      "source": "./",
+      "category": "fun"
+    }
+  ]
+}

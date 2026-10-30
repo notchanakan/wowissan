@@ -1,0 +1,34 @@
+{
+  "name": "wowissan",
+  "version": "1.0.0",
+  "description": "เว้าอีสาน (wowissan) — ให้ Claude เว้าภาษาอีสานเท่านั้น เปิดด้วย /issanmode on ปิดด้วย /issanmode off (ค่าเริ่มต้นปิด) | Isan dialect mode for Claude Code.",
+  "author": {
+    "name": "notchanakan"
+  },
+  "license": "MIT",
+  "keywords": ["thai", "isan", "dialect", "fun", "language"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/issan-session.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/issan-prompt.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
