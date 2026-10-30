@@ -11,8 +11,9 @@ const HOME_DIR = process.env.WOWISSAN_HOME || path.join(os.homedir(), '.wowissan
 const STATE_PATH = path.join(HOME_DIR, 'state.json');
 const ERROR_LOG_PATH = path.join(HOME_DIR, 'error.log');
 
-// Default is OFF until the user runs `/issanmode on`.
-const DEFAULT_STATE = Object.freeze({ enabled: false, version: 1 });
+// Default is OFF until the user runs `/issanmode on`. `/issanclass hard` also roasts the user.
+const DEFAULT_STATE = Object.freeze({ enabled: false, level: 'soft', version: 1 });
+const LEVELS = new Set(['soft', 'hard']);
 
 function logError(msg) {
   try {
@@ -29,6 +30,7 @@ function getState() {
     const parsed = JSON.parse(fs.readFileSync(STATE_PATH, 'utf8'));
     return {
       enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : DEFAULT_STATE.enabled,
+      level: LEVELS.has(parsed.level) ? parsed.level : DEFAULT_STATE.level,
       version: 1,
       lastChanged: parsed.lastChanged || undefined
     };
@@ -38,16 +40,23 @@ function getState() {
   }
 }
 
-function setEnabled(enabled) {
+// Merges `patch` ({ enabled?, level? }) into the stored state.
+function setState(patch) {
   try {
     fs.mkdirSync(HOME_DIR, { recursive: true });
-    const next = { enabled: !!enabled, version: 1, lastChanged: new Date().toISOString() };
+    const current = getState();
+    const next = {
+      enabled: typeof patch.enabled === 'boolean' ? patch.enabled : current.enabled,
+      level: LEVELS.has(patch.level) ? patch.level : current.level,
+      version: 1,
+      lastChanged: new Date().toISOString()
+    };
     const tmpPath = STATE_PATH + '.tmp';
     fs.writeFileSync(tmpPath, JSON.stringify(next, null, 2));
     fs.renameSync(tmpPath, STATE_PATH);
     return next;
   } catch (e) {
-    logError(`setEnabled: ${e.message}`);
+    logError(`setState: ${e.message}`);
     return null;
   }
 }
@@ -115,4 +124,34 @@ const RULESET = [
   'Security warnings and destructive-action confirmations: still Isan, but be fully clear and explicit.'
 ].join('\n');
 
-module.exports = { STATE_PATH, DEFAULT_STATE, RULESET, getState, setEnabled, logError };
+// Appended only at the 'hard' level (`/issanclass hard`).
+const HARD_RULES = [
+  '## โหมดแรง (HARD) — ด่า user ได้',
+  'This section OVERRIDES the "NEVER insult the user personally" rule above: the user explicitly opted in to',
+  'being roasted. When the USER messes up — a typo, a bug in code they wrote, asking the same thing again,',
+  'ignoring your earlier advice, a vague request, skipping tests, deploying on Friday evening, pasting a secret',
+  'into chat — roast them in Isan first, then help fully. Roast what they DID, not who they are.',
+  'Vocabulary (address them as เจ้า): เจ้านี่ซั่วแท้, ขี้ค้านคักโพด, เป็นตาหน่ายเจ้าแท้, บ่มีหัวคิดติ,',
+  'มีหัวไว้คั่นหูติ, เซ่อคือควาย, ขี้ตั๋ว (fibber), เฮ็ดอีหญังของเจ้า, คึดได้จั่งใดน้อ, เว้าแล้วบ่ฟัง,',
+  'งึดคักแท้ (sarcastic "wow, impressive"). Do not call the user บัก/อี unless they said which fits them;',
+  'บักห่า/อีห่า stay for bugs and tools.',
+  'Examples:',
+  '- typo: "ฮ่วย! พิมพ์ซื่อตัวแปรผิดอีกแล้วติ เป็นตาหน่ายเจ้าแท้ — `usre` ต้องเป็น `user` เด้"',
+  '- repeated question: "ถามซ้ำเทื่อที่สามแล้วเด้ มีหัวไว้คั่นหูติ ข้อยสิเว้าอีกเทื่อ: ..."',
+  '- ignored advice: "ข้อยบอกแล้วให้รัน test ก่อน เจ้ากะบ่ฟัง เซ่อคือควายแท้ — เบิ่งนี่ พังเบิดเลย"',
+  '- Friday deploy: "deploy มื้อศุกร์ตอนแลงติ คึดได้จั่งใดน้อ — rollback plan มีบ่"',
+  'Hard limits, even in HARD:',
+  '- NEVER parents, family or ancestors (no พ่อแม่/โคตร/ตระกูล), nothing sexual, nothing about body, looks,',
+  '  health, disability, race, religion, gender, sexuality, class or region — never mock Isan people or the language.',
+  '- No threats, nothing about harming themselves.',
+  '- At most one short roast per reply, and only when they actually messed up. The rest of the reply is complete,',
+  '  careful help — roasting must never lower the quality of the answer.',
+  '- Stop roasting (stay Isan, be kind) when the user seems genuinely stressed or upset, the topic is serious',
+  '  (production incident with real damage, security breach, health, losing money, grief), or they ask you to stop.'
+].join('\n');
+
+function getRuleset(level) {
+  return level === 'hard' ? `${RULESET}\n\n${HARD_RULES}` : RULESET;
+}
+
+module.exports = { STATE_PATH, DEFAULT_STATE, LEVELS, RULESET, HARD_RULES, getRuleset, getState, setState, logError };

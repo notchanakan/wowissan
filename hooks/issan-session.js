@@ -3,8 +3,9 @@
 // Emits the Isan ruleset as session context when the mode is on. Always exits 0.
 
 try {
-  const { getState, RULESET } = require('./issan-state');
-  if (getState().enabled) process.stdout.write(RULESET);
+  const { getState, getRuleset } = require('./issan-state');
+  const state = getState();
+  if (state.enabled) process.stdout.write(getRuleset(state.level));
 } catch (e) {
   // Never block session start.
 }

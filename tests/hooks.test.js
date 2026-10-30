@@ -61,3 +61,35 @@ test('similar text is not treated as the command', () => {
 test('portable SKILL.md is in sync with the hook ruleset', () => {
   execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'build-skill.js'), '--check']);
 });
+
+test('default class is soft: no roast-the-user rules', () => {
+  const home = freshHome();
+  prompt('/issanmode on', home);
+  const ctx = JSON.parse(prompt('hi', home)).hookSpecificOutput.additionalContext;
+  assert.doesNotMatch(ctx, /HARD/);
+});
+
+test('/issanclass hard adds roast rules and survives off/on', () => {
+  const home = freshHome();
+  const out = JSON.parse(prompt('/issanclass hard', home));
+  assert.strictEqual(out.decision, 'block');
+  assert.match(out.reason, /ญังปิดอยู่/); // mode itself is still off
+  assert.strictEqual(prompt('hi', home), '');
+
+  prompt('/issanmode on', home);
+  assert.match(JSON.parse(prompt('hi', home)).hookSpecificOutput.additionalContext, /HARD/);
+  assert.match(run('issan-session.js', home), /HARD/);
+
+  prompt('/issanmode off', home);
+  prompt('/wowissan:issanmode on', home);
+  assert.match(JSON.parse(prompt('hi', home)).hookSpecificOutput.additionalContext, /HARD/);
+});
+
+test('/issanclass soft drops roast rules; bare /issanclass shows status', () => {
+  const home = freshHome();
+  prompt('/issanmode on', home);
+  prompt('/issanclass hard', home);
+  prompt('/wowissan:issanclass SOFT', home);
+  assert.doesNotMatch(JSON.parse(prompt('hi', home)).hookSpecificOutput.additionalContext, /HARD/);
+  assert.match(JSON.parse(prompt('/issanclass', home)).reason, /ระดับ: soft/);
+});

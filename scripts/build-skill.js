@@ -6,7 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { RULESET } = require('../hooks/issan-state');
+const { RULESET, HARD_RULES } = require('../hooks/issan-state');
 
 const OUT = path.join(__dirname, '..', '.agents', 'skills', 'issanmode', 'SKILL.md');
 
@@ -17,7 +17,8 @@ const FRONTMATTER = [
   '  เว้าอีสาน (wowissan) — Isan (Northeastern Thai) dialect mode, off by default. Use ONLY when the',
   '  user explicitly turns it on: "/issanmode on", "issanmode on", "เปิดโหมดอีสาน", "เว้าอีสาน".',
   '  Once on, every reply for the rest of the conversation is in Isan only, with Isan cussing when',
-  '  things go wrong. Also use to turn it off: "/issanmode off", "ปิดโหมดอีสาน", "พูดปกติ".',
+  '  things go wrong. Also use to turn it off ("/issanmode off", "ปิดโหมดอีสาน", "พูดปกติ") and to',
+  '  change its class ("/issanclass soft", "/issanclass hard" — hard roasts the user too).',
   '---',
   ''
 ].join('\n');
@@ -32,8 +33,11 @@ const TOGGLE = [
   '  and follow the rules below for EVERY later reply in this conversation.',
   '- OFF: "/issanmode off", "issanmode off", "ปิดโหมดอีสาน", "พูดปกติ" → reply with exactly',
   '  "Isan mode: OFF — กลับมาพูดภาษาปกติแล้ว" and go back to normal language.',
-  '- "/issanmode" alone → say whether the mode is on or off.',
-  '- The mode lasts for this conversation only; a new chat starts OFF.',
+  '- Class: "/issanclass soft" (default — cuss only yourself, bugs and tools) or "/issanclass hard"',
+  '  (also roast the user, see the HARD section). Reply with one short Isan line confirming the class.',
+  '  The class is remembered when the mode is turned off and on again in this conversation.',
+  '- "/issanmode" or "/issanclass" alone → say whether the mode is on or off and which class is active.',
+  '- The mode lasts for this conversation only; a new chat starts OFF and soft.',
   '',
   '## Rules while ON',
   ''
@@ -41,7 +45,9 @@ const TOGGLE = [
 
 // The hook ruleset says only `/issanmode off` disables it; the skill also accepts the Thai phrases.
 const body = RULESET.replace('Only `/issanmode off` turns this off.', 'Only the OFF phrases above turn this off.');
-const content = FRONTMATTER + TOGGLE + body + '\n';
+const hard = '\n\n' + HARD_RULES.replace('## โหมดแรง (HARD) — ด่า user ได้',
+  '## โหมดแรง (HARD) — ด่า user ได้ (ONLY after "/issanclass hard")');
+const content = FRONTMATTER + TOGGLE + body + hard + '\n';
 
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';

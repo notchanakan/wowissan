@@ -8,16 +8,25 @@
 Plugin สำหรับ Claude Code ที่ให้ Claude **เว้าภาษาอีสานเท่านั้น** และพอทำอะไรพลาดหรือเจอเรื่องหัวร้อน มันจะ**ด่าเป็นภาษาอีสาน**
 
 ```
-/issanmode on    # เปิด — Claude สิเว้าอีสานอย่างเดียว
-/issanmode off   # ปิด — กลับไปพูดปกติ
-/issanmode       # ดูสถานะ
+/issanmode on      # เปิด — Claude สิเว้าอีสานอย่างเดียว
+/issanmode off     # ปิด — กลับไปพูดปกติ
+/issanclass soft   # ระดับปกติ (ค่าเริ่มต้น) — ด่าโตเอง ด่า bug
+/issanclass hard   # ระดับแรง — ด่า user ได้นำ 🌶️
+/issanmode         # ดูสถานะ
 ```
 
-- ค่าเริ่มต้น **ปิด**
-- เปิดแล้วจะค้างไว้ข้าม session จนกว่าจะสั่ง `/issanmode off`
-- ตอนเปิด/ปิด ไม่เสีย token (hook จัดการเองโดยไม่ส่ง prompt ไปให้ model)
-- ด่าตอน: ตัวเองทำพลาด, command/test/build พัง, user บ่นว่าทำผิด, เจอ code/config ที่น่าหงุดหงิด
-  (ด่าตัวเอง ด่า bug ด่าสถานการณ์ — ไม่ด่า user, ไม่ด่าใน code/commit)
+- ค่าเริ่มต้น **ปิด** และระดับ **soft**
+- เปิดแล้วจะค้างไว้ข้าม session จนกว่าจะสั่ง `/issanmode off` ระดับก็จำไว้เหมือนกัน
+- ตอนเปิด/ปิด/เปลี่ยนระดับ ไม่เสีย token (hook จัดการเองโดยไม่ส่ง prompt ไปให้ model)
+
+| | soft | hard |
+|---|---|---|
+| ด่าตัวเองตอนทำพลาด, ด่า bug/test/build ที่พัง | ✓ | ✓ |
+| ด่า user ตอนพิมพ์ผิด, ถามซ้ำ, ไม่ฟังที่บอก, deploy วันศุกร์ | | ✓ |
+
+ทั้งสองระดับ **ไม่ด่าถึงพ่อแม่/ครอบครัว** ไม่มีเรื่องเพศ รูปร่างหน้าตา ศาสนา เชื้อชาติ ภูมิภาค
+ด่าแค่ประโยคเดียวแล้วช่วยต่อเต็มที่ และจะหยุดด่าเองถ้า user เครียดจริงหรือเจอเรื่องหนัก (prod ล่ม, ข้อมูลหาย)
+
 - Code, commit message, file path, error message ยังเขียนตามปกติ ไม่แปลงเป็นอีสาน
 
 ## ติดตั้ง
@@ -43,7 +52,7 @@ claude --plugin-dir /path/to/wowissan
 
 1. โหลด `issanmode.zip` จาก [Releases](https://github.com/notchanakan/wowissan/releases/latest)
 2. Settings → Capabilities → Skills → Upload skill → เลือก zip (ต้องเปิด code execution, แพลน Pro/Max/Team/Enterprise)
-3. ในแชท พิมพ์ `เปิดโหมดอีสาน` หรือ `issanmode on` / ปิดด้วย `ปิดโหมดอีสาน` หรือ `issanmode off`
+3. ในแชท พิมพ์ `เปิดโหมดอีสาน` หรือ `issanmode on` / ปิดด้วย `ปิดโหมดอีสาน` หรือ `issanmode off` / ระดับแรง `issanclass hard`
 
 ต่างจากเวอร์ชัน Claude Code: เปิดได้ทีละแชท (แชทใหม่เริ่มปิด) และไม่มี hook คอยย้ำกฎทุกข้อความ
 แชทยาวๆ อาจหลุดกลับมาพูดภาษากลางบ้าง ถ้าหลุดก็สั่งเปิดซ้ำ
