@@ -1,0 +1,53 @@
+name: release
+
+# Push a tag like v1.0.1 (matching "version" in .claude-plugin/plugin.json) to publish
+# issanmode.zip — the skill bundle for claude.ai and Claude Desktop — to GitHub Releases.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Check tag matches plugin.json version
+        run: |
+          version=$(node -p "require('./.claude-plugin/plugin.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match plugin.json version $version"
+            exit 1
+          fi
+
+      - name: Test
+        run: node --test tests/
+
+      - name: Build skill zip
+        run: |
+          node scripts/build-skill.js
+          mkdir -p dist
+          cd .agents/skills && zip -r "$GITHUB_WORKSPACE/dist/issanmode.zip" issanmode
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<EOF
+          ## ติดตั้ง
+
+          - **claude.ai / Claude Desktop:** โหลด \`issanmode.zip\` ข้างล่าง → Settings → Capabilities → Skills → Upload skill
+          - **Claude Code:** \`/plugin marketplace add ${GITHUB_REPOSITORY}\` แล้ว \`/plugin install wowissan@wowissan\`
+          - **Agent อื่นๆ:** \`npx skills add ${GITHUB_REPOSITORY}\`
+          EOF
+          gh release create "$GITHUB_REF_NAME" dist/issanmode.zip \
+            --title "$GITHUB_REF_NAME — เว้าอีสาน" \
+            --notes-file notes.md \
+            --generate-notes

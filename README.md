@@ -74,3 +74,14 @@ node --test tests/
 ## License
 
 MIT
+
+## ออก release ใหม่
+
+GitHub Actions จะสร้าง `issanmode.zip` (สำหรับ claude.ai / Claude Desktop) แล้วแนบขึ้น
+[Releases](https://github.com/notchanakan/wowissan/releases) ให้อัตโนมัติเมื่อ push tag:
+
+1. แก้ `"version"` ใน `.claude-plugin/plugin.json` เช่น `1.0.1`
+2. commit แล้ว push
+3. `git tag v1.0.1 && git push origin v1.0.1`
+
+tag ต้องตรงกับ version ใน `plugin.json` ไม่งั้น workflow จะ fail
