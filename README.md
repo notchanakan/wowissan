@@ -1,5 +1,10 @@
 # เว้าอีสาน (wowissan) 🌾
 
+[![ci](https://github.com/notchanakan/wowissan/actions/workflows/ci.yml/badge.svg)](https://github.com/notchanakan/wowissan/actions/workflows/ci.yml)
+[![release](https://github.com/notchanakan/wowissan/actions/workflows/release.yml/badge.svg)](https://github.com/notchanakan/wowissan/actions/workflows/release.yml)
+[![latest release](https://img.shields.io/github/v/release/notchanakan/wowissan)](https://github.com/notchanakan/wowissan/releases/latest)
+[![license](https://img.shields.io/github/license/notchanakan/wowissan)](LICENSE)
+
 Plugin สำหรับ Claude Code ที่ให้ Claude **เว้าภาษาอีสานเท่านั้น** และพอทำอะไรพลาดหรือเจอเรื่องหัวร้อน มันจะ**ด่าเป็นภาษาอีสาน**
 
 ```
